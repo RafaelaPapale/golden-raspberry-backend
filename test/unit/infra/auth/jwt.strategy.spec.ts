@@ -4,7 +4,6 @@ jest.mock('passport-jwt', () => ({
     fromAuthHeaderAsBearerToken: jest.fn().mockReturnValue(jest.fn()),
   },
   Strategy: class MockJwtStrategy {
-    static readonly name = 'jwt';
     name = 'jwt';
     constructor(_options: any, _verify: any) {}
   },

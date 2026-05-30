@@ -194,8 +194,7 @@ src/infra/
 │   └── repository/
 │       └── premiacoes/
 │           └── premiacoes.repository.ts # Implementação de IPremiacoesRepository
-├── decorators/
-│   ├── apm-helper.decorator.ts           # Helper para APM com suporte a transações
+a transações
 │   ├── document-api-endpoint.decorator.ts# Decorator composto para documentação Swagger
 │   └── jwt.decorator.ts                  # Param decorator @JwtExport para injetar payload
 └── swagger/
