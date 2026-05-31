@@ -97,7 +97,7 @@ export async function createIntegrationApp(): Promise<IntegrationApp> {
 }
 ```
 
-O `ValidationPipe` é registrado com os mesmos parâmetros do `main.ts` para fidelidade com o ambiente de produção.
+O `ValidationPipe` é registrado com os mesmos parâmetros do `main.ts` para fidelidade com o ambiente de produção. Como o `AppModule` registra o `JwtAuthGuard` via `APP_GUARD`, o guard está ativo neste app de testes — os endpoints continuam acessíveis porque estão decorados com `@Public()`.
 
 ### `createIntegrationModule`
 
@@ -222,14 +222,14 @@ Conjunto de funções que retornam arrays de `Filme` com cenários determinísti
 
 - Resposta 200 com payload `{ status: 'ok', service: 'golden-raspberry-backend', timestamp }`
 - Content-Type `application/json`
-- Acessível sem autenticação
+- Acessível sem autenticação — `@Public()` faz o `JwtAuthGuard` global liberar o acesso
 - Rota inexistente retorna 404
 
 ### Endpoint `GET /v1/premiacoes/intervalos`
 
 - Resposta 200 com dados do CSV real
 - Content-Type `application/json`
-- Acessível sem autenticação
+- Acessível sem autenticação — `@Public()` faz o `JwtAuthGuard` global liberar o acesso
 - Estrutura `{ min: [...], max: [...] }` com arrays não vazios
 - Cada item com shape `{ producer, interval, previousWin, followingWin }`
 - Resultado exato com Joel Silver no min e Matthew Vaughn no max
@@ -299,7 +299,7 @@ Nenhuma integração externa é testada. A suíte é completamente autossuficien
 
 - Banco de dados: SQLite in-memory — sem servidor externo
 - CSV: arquivo local `docs/Movielist.csv` — lido do sistema de arquivos
-- Autenticação: variável de ambiente `JWT_SECRET_KEY` setada inline no setup
+- Autenticação: `JWT_SECRET_KEY` setada inline no setup — obrigatória porque o `JwtAuthGuard` está ativo globalmente e a `JwtStrategy` lê a chave na inicialização via `ConfigService`
 
 ---
 

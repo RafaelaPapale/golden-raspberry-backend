@@ -54,6 +54,7 @@ test/unit/
 │           └── buscar-intervalos-premios.use-case.spec.ts
 ├── infra/
 │   ├── auth/
+│   │   ├── jwt-auth.guard.spec.ts
 │   │   ├── jwt-payload.dto.spec.ts
 │   │   ├── jwt.strategy.spec.ts
 │   │   └── public.decorator.spec.ts
@@ -175,6 +176,18 @@ Usado em `jwt.strategy.spec.ts` para substituir `passport-jwt` antes de qualquer
 jest.mock('passport-jwt', () => ({
   ExtractJwt: { fromAuthHeaderAsBearerToken: jest.fn().mockReturnValue(jest.fn()) },
   Strategy: class MockJwtStrategy { name = 'jwt'; },
+}));
+```
+
+Usado em `jwt-auth.guard.spec.ts` para substituir `@nestjs/passport` antes de qualquer import, evitando a inicialização real do Passport ao criar a classe `JwtAuthGuard`:
+```typescript
+jest.mock('@nestjs/passport', () => ({
+  AuthGuard: (_strategy: string) => {
+    class MockPassportAuthGuard {
+      canActivate(_ctx: unknown) { return true; }
+    }
+    return MockPassportAuthGuard;
+  },
 }));
 ```
 
@@ -315,6 +328,19 @@ Cobrem a criação de instâncias, atribuição de campos e aceitação de valor
 | Mensagem de erro `'Token inválido'` | `.message === 'Token inválido'` |
 | Campos extras no payload são ignorados | `result.sub === 'user-abc'` |
 
+### `JwtAuthGuard`
+
+| Caso | Verificação |
+|---|---|
+| Instanciação | `toBeDefined()`, `toBeInstanceOf(JwtAuthGuard)` |
+| `canActivate` retorna `true` para endpoints `@Public()` | `expect(result).toBe(true)` |
+| `canActivate` consulta `IS_PUBLIC_KEY` no handler e na classe | `spy.toHaveBeenCalledWith(IS_PUBLIC_KEY, [handler, klass])` |
+| `canActivate` delega para `AuthGuard` pai quando não público | `parentSpy.toHaveBeenCalledWith(ctx)` |
+| Resultado do `AuthGuard` pai é propagado | `expect(result).toBe(false)` |
+| `AuthGuard` pai não é chamado quando `isPublic = true` | `parentSpy.not.toHaveBeenCalled()` |
+
+> `*.guard.ts` é excluído da coleta de cobertura pelo Jest (configurado em `package.json`), mas o teste existe para documentar e verificar o comportamento do guard.
+
 ### `@Public()` decorator
 
 | Caso | Verificação |
@@ -399,6 +425,10 @@ O `fs/promises` é mockado antes de qualquer import para que o `readFile` real n
 **Mock de `passport-jwt` antes dos imports em `jwt.strategy.spec.ts`**
 
 A `PassportStrategy` exige que a `Strategy` do `passport-jwt` seja uma classe nomeada. O mock é declarado antes dos imports para garantir que o módulo carregado já usa a versão mockada, evitando erros de inicialização do Passport.
+
+**Mock de `@nestjs/passport` antes dos imports em `jwt-auth.guard.spec.ts`**
+
+`JwtAuthGuard extends AuthGuard('jwt')` — a extensão de classe ocorre em tempo de definição do módulo. `AuthGuard('jwt')` é uma factory de `@nestjs/passport` que tenta registrar estratégias Passport. O mock substitui essa factory por uma que retorna uma classe simples e controlada, permitindo testar exclusivamente a lógica `isPublic` do guard sem dependência de Passport ou `JwtStrategy`.
 
 **Captura da factory do `createParamDecorator` em `jwt.decorator.spec.ts`**
 

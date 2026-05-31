@@ -680,9 +680,9 @@ Configuração do middleware HTTP da biblioteca `nestjs-pino`:
 
 | Elemento | Descrição |
 |---|---|
-| **Imports** | `ConfigModule` (global), `PinoLoggerModule`, `DatabaseModule`, `ScheduleModule`, `PremiacoesModule` |
+| **Imports** | `ConfigModule` (global), `PinoLoggerModule`, `DatabaseModule`, `ScheduleModule`, `AuthModule`, `PremiacoesModule` |
 | **Controllers** | `HealthController` |
-| **Providers** | Nenhum provider direto |
+| **Providers** | `{ provide: APP_GUARD, useClass: JwtAuthGuard }` — guard global de autenticação |
 | **Exports** | Nenhum |
 
 O `ConfigModule` é configurado com `isGlobal: true`, tornando o `ConfigService` disponível em toda a aplicação sem necessidade de importação explícita em cada módulo.
@@ -727,7 +727,7 @@ Exporta `LoggerModule` para que módulos de feature possam injetar `PinoLogger` 
 | **Providers** | `JwtStrategy` |
 | **Exports** | `JwtModule` |
 
-O `JwtModule` é registrado com `secret: process.env.JWT_SECRET_KEY` e expiração de `1h`. **Observação importante:** o `AuthModule` não é importado pelo `AppModule` nem pelo `PremiacoesModule` na implementação atual. O `JwtAuthGuard` e a `JwtStrategy` existem como infraestrutura pronta para uso, mas nenhum endpoint protegido está ativamente configurado no momento.
+O `JwtModule` é registrado com `secret: process.env.JWT_SECRET_KEY` e expiração de `1h`. O `AuthModule` é importado pelo `AppModule`, que registra o `JwtAuthGuard` globalmente via `APP_GUARD`. A variável de ambiente `JWT_SECRET_KEY` é obrigatória para inicialização da aplicação.
 
 ---
 
@@ -1015,13 +1015,21 @@ NestJS serializa para JSON e retorna HTTP 200
 
 ---
 
-### DA-06: Infraestrutura de autenticação JWT pronta, sem endpoints protegidos
+### DA-06: Autenticação JWT com guard global ativo e endpoints públicos via decorator
 
-**Decisão:** `JwtAuthGuard`, `JwtStrategy`, `AuthModule`, `@JwtExport` e `@Public()` estão implementados, mas todos os endpoints atuais usam `@Public()`.
+**Decisão:** `JwtAuthGuard` está registrado como guard global no `AppModule` via `APP_GUARD`. Todos os endpoints que não exigem autenticação são marcados com `@Public()`, que usa `SetMetadata` para sinalizar ao guard que o acesso deve ser liberado sem validar o token.
 
-**Vantagem:** A infraestrutura de autenticação está pronta para ser ativada sem alterações estruturais. Adicionar um endpoint protegido requer apenas remover `@Public()` e importar `AuthModule`.
+**Como funciona em runtime:**
+1. Toda requisição HTTP passa pelo `JwtAuthGuard.canActivate()`
+2. O guard consulta o metadata `isPublic` no handler e na classe via `Reflector`
+3. Se `isPublic = true` → acesso liberado imediatamente
+4. Se `isPublic = false` (ou ausente) → token JWT é validado pela `JwtStrategy`
 
-**Trade-off:** O `AuthModule` não está importado no `AppModule` nem no `PremiacoesModule`, o que significa que o `JwtAuthGuard` não está registrado como guard global. Para ativar a proteção, será necessário registrá-lo via `APP_GUARD` no `AppModule` e importar o `AuthModule`.
+**Endpoints públicos atuais:** `GET /health-check` e `GET /v1/premiacoes/intervalos` — ambos decorados com `@Public()`.
+
+**Vantagem:** A proteção é opt-out, não opt-in. Qualquer novo endpoint sem `@Public()` é automaticamente protegido, eliminando o risco de esquecer de adicionar o guard manualmente.
+
+**Trade-off:** Todos os endpoints públicos requerem o decorator `@Public()` explícito. Adicionar um novo endpoint sem `@Public()` sem ter um token válido resultará em `401 Unauthorized`. Esse comportamento é intencional e deliberado.
 
 ---
 
@@ -1029,16 +1037,9 @@ NestJS serializa para JSON e retorna HTTP 200
 
 As sugestões a seguir respeitam a arquitetura em camadas existente e podem ser incorporadas sem reescrita estrutural.
 
-### Ativação da autenticação JWT
+### Endpoint de login
 
-A infraestrutura está implementada. Para ativar a proteção global de endpoints:
-
-1. Registrar `JwtAuthGuard` como provider global no `AppModule` via token `APP_GUARD`.
-2. Importar `AuthModule` no `AppModule`.
-3. Criar um endpoint de login em um novo módulo `AutenticacaoModule` que gere e retorne o JWT.
-4. Remover `@Public()` dos endpoints que devem ser protegidos.
-
-A existência do decorator `@Public()` garante que endpoints como `/health-check` continuem acessíveis sem token após a ativação.
+O `JwtAuthGuard` está ativo globalmente e a `JwtStrategy` valida tokens Bearer. Para que clientes possam obter tokens, é necessário criar um endpoint de autenticação em um novo módulo `AutenticacaoModule` com credenciais de usuário, geração de JWT via `JwtService` e retorno do token. Novos endpoints sem `@Public()` passarão automaticamente pela proteção sem alterações adicionais.
 
 ### Banco de dados persistente
 
@@ -1089,6 +1090,6 @@ O backend Golden Raspberry Awards entrega uma API REST focada, bem estruturada e
 
 A arquitetura limpa com inversão de dependência via interfaces está corretamente aplicada: o use case central nunca referencia diretamente nenhum detalhe de infraestrutura. O mapper isola o modelo de banco da entidade de domínio. O loader garante carga idempotente dos dados. O decorator de documentação padroniza a superfície da API.
 
-A infraestrutura de autenticação JWT está implementada e pronta para ser ativada, o que demonstra planejamento para crescimento sem retrabalho. O banco em memória simplifica a execução local e em pipelines de testes, com caminho claro de migração para persistência permanente quando necessário.
+A autenticação JWT está implementada e ativa: o `JwtAuthGuard` protege globalmente todos os endpoints, e o decorator `@Public()` libera seletivamente os que não requerem autenticação. O banco em memória simplifica a execução local e em pipelines de testes, com caminho claro de migração para persistência permanente quando necessário.
 
 O sistema está em condições de receber novos módulos de feature, novos endpoints e evolução da infraestrutura de dados sem comprometer os princípios arquiteturais estabelecidos.

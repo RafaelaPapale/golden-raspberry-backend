@@ -160,9 +160,7 @@ npm install
 
 ### Configuração
 
-A aplicação não requer variáveis de ambiente para execução local. O banco é SQLite em memória e os dados são carregados automaticamente do arquivo CSV.
-
-Para ativar a infraestrutura de autenticação JWT (não utilizada nos endpoints atuais):
+A variável `JWT_SECRET_KEY` é obrigatória — usada pela `JwtStrategy` para validar tokens e pelo `JwtModule` para assinar futuros tokens de login:
 
 ```
 JWT_SECRET_KEY=seu-segredo-aqui
@@ -324,7 +322,7 @@ Arquivos excluídos da medição de cobertura:
 | Verificação de banco vazio antes da importação | Garante idempotência; reinicializações parciais não duplicam dados |
 | Expansão de produtores múltiplos no CSV | Um registro por produtor permite análise individual de intervalos |
 | Decorator `DocumentApiEndpoint` composto | Padroniza documentação Swagger; ponto único para respostas padrão (400, 500) |
-| Infraestrutura JWT implementada sem endpoints protegidos | Pronta para ativação sem reescrita estrutural |
+| `JwtAuthGuard` global via `APP_GUARD` + `@Public()` opt-out | Proteção automática de novos endpoints; endpoints públicos explicitamente marcados |
 
 Para detalhes e trade-offs de cada decisão, consulte [ARQUITETURA.md — Decisões Arquiteturais](docs/arquitetura-oficial/ARQUITETURA.md#decisões-arquiteturais).
 
@@ -403,7 +401,7 @@ Verificar se o IDE está usando o `tsconfig.json` com o alias `"src/*": ["./src/
 
 ## Melhorias Futuras
 
-- **Ativação do JWT:** Registrar `JwtAuthGuard` como guard global via `APP_GUARD` no `AppModule`, importar `AuthModule` e criar endpoint de login.
+- **Endpoint de login:** Criar módulo `AutenticacaoModule` com endpoint que receba credenciais, valide o usuário e retorne um token JWT assinado via `JwtService`.
 - **Banco persistente:** Alterar `databaseConfig` para SQLite em disco ou PostgreSQL; substituir `synchronize: true` por migrations TypeORM.
 - **Cache de resultado:** O endpoint de intervalos é determinístico; um cache em memória com TTL eliminaria queries repetidas ao banco.
 - **Correlation ID:** Adicionar identificador por requisição HTTP propagado nos logs para rastreabilidade.
