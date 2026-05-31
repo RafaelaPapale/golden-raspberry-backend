@@ -1,5 +1,8 @@
 import request from 'supertest';
-import { IntegrationApp, createIntegrationApp } from '../setup/integration-app.setup';
+import {
+  IntegrationApp,
+  createIntegrationApp,
+} from '../setup/integration-app.setup';
 
 describe('[HealthController] Integration', () => {
   let integrationApp: IntegrationApp;

@@ -5,7 +5,6 @@ jest.mock('passport-jwt', () => ({
   },
   Strategy: class MockJwtStrategy {
     name = 'jwt';
-    constructor(_options: any, _verify: any) {}
   },
 }));
 

@@ -53,8 +53,12 @@ export class FilmeFactory {
     interval: number,
   ): [Filme, Filme] {
     return [
-      FilmeFactory.createWinner(baseYear, producer, { title: `${producer} Win 1` }),
-      FilmeFactory.createWinner(baseYear + interval, producer, { title: `${producer} Win 2` }),
+      FilmeFactory.createWinner(baseYear, producer, {
+        title: `${producer} Win 1`,
+      }),
+      FilmeFactory.createWinner(baseYear + interval, producer, {
+        title: `${producer} Win 2`,
+      }),
     ];
   }
 }

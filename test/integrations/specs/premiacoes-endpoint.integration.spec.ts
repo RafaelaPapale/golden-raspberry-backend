@@ -1,5 +1,8 @@
 import request from 'supertest';
-import { IntegrationApp, createIntegrationApp } from '../setup/integration-app.setup';
+import {
+  IntegrationApp,
+  createIntegrationApp,
+} from '../setup/integration-app.setup';
 
 /**
  * Expected values derived from docs/Movielist.csv analysis.
@@ -135,7 +138,9 @@ describe('[PremiacoesController] Integration — real CSV data', () => {
         .get('/v1/premiacoes/intervalos')
         .expect(200);
 
-      const joelSilver = body.min.find((i) => i.producer === EXPECTED_MIN.producer);
+      const joelSilver = body.min.find(
+        (i) => i.producer === EXPECTED_MIN.producer,
+      );
       expect(joelSilver).toBeDefined();
       expect(joelSilver.interval).toBe(EXPECTED_MIN.interval);
       expect(joelSilver.previousWin).toBe(EXPECTED_MIN.previousWin);
@@ -187,12 +192,8 @@ describe('[PremiacoesController] Integration — real CSV data', () => {
         .expect(200);
 
       expect(body).toEqual({
-        min: expect.arrayContaining([
-          expect.objectContaining(EXPECTED_MIN),
-        ]),
-        max: expect.arrayContaining([
-          expect.objectContaining(EXPECTED_MAX),
-        ]),
+        min: expect.arrayContaining([expect.objectContaining(EXPECTED_MIN)]),
+        max: expect.arrayContaining([expect.objectContaining(EXPECTED_MAX)]),
       });
     });
   });

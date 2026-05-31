@@ -201,7 +201,9 @@ describe('[PremiacoesRepository] Integration', () => {
     it('should return the same producer appearing multiple times if they won multiple times', async () => {
       await db.insertFilmes(filmeFixtures.consecutiveWins());
       const vencedores = await repository.listarVencedores();
-      const joelEntries = vencedores.filter((v) => v.producer === 'Joel Silver');
+      const joelEntries = vencedores.filter(
+        (v) => v.producer === 'Joel Silver',
+      );
       expect(joelEntries).toHaveLength(2);
     });
   });
