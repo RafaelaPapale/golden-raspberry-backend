@@ -193,12 +193,14 @@ src/infra/
 │   │       └── filme.model.ts    # Entidade TypeORM da tabela 'filmes'
 │   └── repository/
 │       └── premiacoes/
-│           └── premiacoes.repository.ts # Implementação de IPremiacoesRepository
-a transações
-│   ├── document-api-endpoint.decorator.ts# Decorator composto para documentação Swagger
-│   └── jwt.decorator.ts                  # Param decorator @JwtExport para injetar payload
+│           └── premiacoes.repository.ts  # Implementação de IPremiacoesRepository
+├── decorators/
+│   ├── document-api-endpoint.decorator.ts  # Decorator composto para documentação Swagger
+│   └── jwt.decorator.ts                    # Param decorator @JwtExport para injetar payload
+├── services/
+│   └── csv-reader.service.ts               # Leitura e parse de arquivos CSV
 └── swagger/
-    └── response-schemas.ts       # Schemas OpenAPI para respostas padronizadas
+    └── response-schemas.ts                 # Schemas OpenAPI para respostas padronizadas
 ```
 
 ---
